@@ -17,7 +17,7 @@ COPY providers/ providers/
 
 RUN CGO_ENABLED=0 go build -o /go/bin/cloud-controller-manager ./cmd/cloud-controller-manager
 
-FROM registry.k8s.io/build-image/go-runner:v2.4.0-go1.25.8-bookworm.0
+FROM gcr.io/gke-release/gke-distroless/go-runner@sha256:3966e3d1257f799098b4abf48204de10111fb03caadd1e854b1d12277157bf1e
 COPY --from=builder --chown=root:root /go/bin/cloud-controller-manager /cloud-controller-manager
 CMD ["/cloud-controller-manager"]
 ENTRYPOINT ["/cloud-controller-manager"]
