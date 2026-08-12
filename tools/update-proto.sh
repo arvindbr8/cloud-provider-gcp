@@ -70,8 +70,11 @@ fi
   echo "Installing protoc-gen-go/grpc..."
   export GOBIN="${TOOLS_BIN}"
   
-  go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-  go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+  PROTOC_GEN_GO_VERSION="v1.36.11"
+  PROTOC_GEN_GO_GRPC_VERSION="v1.6.2"
+  
+  go install google.golang.org/protobuf/cmd/protoc-gen-go@${PROTOC_GEN_GO_VERSION}
+  go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@${PROTOC_GEN_GO_GRPC_VERSION}
 
 # Find all proto files outside of vendor and temporary/artifact directories
 proto_files=$(find . -name "*.proto" -not -path "./vendor/*" -not -path "./_*" )
