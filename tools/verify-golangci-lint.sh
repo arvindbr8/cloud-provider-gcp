@@ -43,7 +43,7 @@ export IFS=$'\n'
 # as the prefix, however if we run it outside it returns the full path of the file
 # with a leading underscore. We'll need to support both scenarios for all_packages.
 all_packages=()
-while IFS='' read -r line; do all_packages+=("${line}"); done < <(go list -e ./... | grep -vE "/vendor" | sed -e 's|^k8s.io/cloud-provider-gcp/||' -e "s|^_\(${KUBE_ROOT}/\)\{0,1\}||")
+while IFS='' read -r line; do all_packages+=("${line}"); done < <(go list -e ./... ./providers/... | grep -vE "/vendor" | sed -e 's|^k8s.io/cloud-provider-gcp/||' -e "s|^_\(${KUBE_ROOT}/\)\{0,1\}||")
 
 # Read failing packages
 failing_packages=()
@@ -62,7 +62,7 @@ for p in "${all_packages[@]}"; do
 
   # Run golangci-lint on the package directory
   # To make it package-focused, we pass the package directory to golangci-lint
-  if failedLint=$(golangci-lint run --config="${KUBE_ROOT_ABSOLUTE}/.golangci.yml" "${p}" 2>/dev/null); then
+  if failedLint=$(golangci-lint run --config="${KUBE_ROOT_ABSOLUTE}/.golangci.yml" "${p}" 2>&1); then
     failedLint=""
   fi
 

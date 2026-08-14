@@ -15,6 +15,7 @@ linters:
     - revive
     - gofmt
     - govet
+    - staticcheck
 
 issues:
   exclude-use-default: false
