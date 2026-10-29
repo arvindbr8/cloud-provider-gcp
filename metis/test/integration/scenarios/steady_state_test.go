@@ -23,9 +23,9 @@ import (
 	"k8s.io/metis/test/integration"
 )
 
-// TestSteadyStateAllocation verifies that allocating pods within existing capacity
-// is handled entirely by the local SQLite IPAM engine without mutating NNC spec
-// or invoking GCE APIs.
+// TestSteadyStateAllocation verifies that allocating pods within existing
+// capacity is handled entirely by the local SQLite IPAM engine without mutating
+// NNC spec or invoking GCE APIs.
 func TestSteadyStateAllocation(t *testing.T) {
 	f := integration.NewFixture(t)
 
@@ -40,7 +40,8 @@ func TestSteadyStateAllocation(t *testing.T) {
 		}
 	}
 
-	// Verification of isolation from cloud provider: assert no GCE or NNC spec changes.
+	// Verification of isolation from cloud provider: assert no GCE or NNC spec
+	// changes.
 	currentNNC := f.NNC()
 	if allocations := currentNNC.Spec.Allocations; len(allocations) > 0 {
 		for _, a := range allocations {

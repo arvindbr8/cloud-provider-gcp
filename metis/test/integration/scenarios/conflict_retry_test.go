@@ -27,10 +27,11 @@ import (
 	"k8s.io/metis/test/integration"
 )
 
-// TestConflictRetryOnStatusUpdate tests optimistic concurrency handling during status
-// reconciliation. It injects 409 Conflict errors into NodeNetworkConfig status update
-// calls to verify that the status controller retries updates on conflict and converges
-// successfully without dropping state (PR #1410 resilience).
+// TestConflictRetryOnStatusUpdate tests optimistic concurrency handling during
+// status reconciliation. It injects 409 Conflict errors into NodeNetworkConfig
+// status update calls to verify that the status controller retries updates on
+// conflict and converges successfully without dropping state (PR #1410
+// resilience).
 func TestConflictRetryOnStatusUpdate(t *testing.T) {
 	conflictInjected := false
 	conflictResolved := false
@@ -53,7 +54,8 @@ func TestConflictRetryOnStatusUpdate(t *testing.T) {
 	// Initial pod allocation triggers status reconciliation.
 	f.AllocatePod("pod-conflict-test")
 
-	// Reconcile resilience: status controller retries on conflict and completes status publish.
+	// Reconcile resilience: status controller retries on conflict and completes
+	// status publish.
 	f.Eventually("status publish succeeds despite initial 409 conflict", func() (bool, string) {
 		nnc := f.NNC()
 		return conflictResolved && integration.StatusReady(nnc) && len(integration.StatusCIDRs(nnc)) == 1,

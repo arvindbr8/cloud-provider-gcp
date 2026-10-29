@@ -24,11 +24,12 @@ import (
 	"k8s.io/metis/test/integration"
 )
 
-// TestMultiNodeConcurrentScaleUpBurst tests multi-node burst scaling across 5 cluster
-// nodes experiencing concurrent high-volume pod scheduling. It saturates the bootstrap
-// blocks across all nodes and unleashes a parallel multi-pod burst, verifying that CCM
-// spec and status controllers dynamically provision secondary alias ranges across all
-// nodes in parallel with strict CIDR disjointness and zero cross-node database leakage.
+// TestMultiNodeConcurrentScaleUpBurst tests multi-node burst scaling across 5
+// cluster nodes experiencing concurrent high-volume pod scheduling. It
+// saturates the bootstrap blocks across all nodes and unleashes a parallel
+// multi-pod burst, verifying that CCM spec and status controllers dynamically
+// provision secondary alias ranges across all nodes in parallel with strict
+// CIDR disjointness and zero cross-node database leakage.
 func TestMultiNodeConcurrentScaleUpBurst(t *testing.T) {
 	f := integration.NewFixture(t)
 
@@ -41,7 +42,8 @@ func TestMultiNodeConcurrentScaleUpBurst(t *testing.T) {
 		f.AddNode("worker-5", "10.0.4.0/28"),
 	}
 
-	// Initial capacity saturation: fill initial capacity (13 usable IPs) on all 5 nodes concurrently.
+	// Initial capacity saturation: fill initial capacity (13 usable IPs) on all 5
+	// nodes concurrently.
 	var wg sync.WaitGroup
 	errCh := make(chan error, len(nodes)*integration.InitialUsableIPs)
 	for nodeIdx, node := range nodes {
@@ -63,7 +65,8 @@ func TestMultiNodeConcurrentScaleUpBurst(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Concurrent multi-pod burst: burst 15 overflow pods on each node concurrently (75 overflow pods).
+	// Concurrent multi-pod burst: burst 15 overflow pods on each node concurrently
+	// (75 overflow pods).
 	const burstPodsPerNode = 15
 	nodeBurstCIDRs := make([][]string, len(nodes))
 	var burstMutex sync.Mutex
@@ -94,7 +97,8 @@ func TestMultiNodeConcurrentScaleUpBurst(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Infrastructure convergence verification: all 5 nodes expand to 2 or more ranges and publish Ready=True.
+	// Infrastructure convergence verification: all 5 nodes expand to 2 or more
+	// ranges and publish Ready=True.
 	f.Eventually("all 5 nodes expand in GCE and status with Ready=True", func() (bool, string) {
 		for _, nh := range nodes {
 			ranges := nh.GCEAliasRanges()
@@ -108,7 +112,8 @@ func TestMultiNodeConcurrentScaleUpBurst(t *testing.T) {
 		return true, "all 5 nodes expanded and ready"
 	})
 
-	// CIDR disjointness verification: ensure no dynamic CIDR is shared across any two nodes.
+	// CIDR disjointness verification: ensure no dynamic CIDR is shared across any
+	// two nodes.
 	allDynamicCIDRs := make(map[string]string)
 	for idx, nh := range nodes {
 		for _, c := range nodeBurstCIDRs[idx] {
@@ -119,7 +124,8 @@ func TestMultiNodeConcurrentScaleUpBurst(t *testing.T) {
 		}
 	}
 
-	// Store isolation verification: zero cross-node dynamic CIDR leakage across SQLite databases.
+	// Store isolation verification: zero cross-node dynamic CIDR leakage across
+	// SQLite databases.
 	for i, nodeA := range nodes {
 		for j, nodeB := range nodes {
 			if i == j {

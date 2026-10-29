@@ -23,14 +23,15 @@ import (
 	"k8s.io/metis/test/integration"
 )
 
-// TestPartialReleaseWithActivePods tests selective scale-down when an instance has
-// multiple dynamic blocks allocated. It verifies that an idle dynamic block is drained
-// and released to GCE while sibling blocks with active pods remain untouched and
-// operational.
+// TestPartialReleaseWithActivePods tests selective scale-down when an instance
+// has multiple dynamic blocks allocated. It verifies that an idle dynamic block
+// is drained and released to GCE while sibling blocks with active pods remain
+// untouched and operational.
 func TestPartialReleaseWithActivePods(t *testing.T) {
 	f := integration.NewFixture(t)
 
-	// Multi-block expansion: exhaust initial block and expand into two dynamic blocks.
+	// Multi-block expansion: exhaust initial block and expand into two dynamic
+	// blocks.
 	for i := 1; i <= integration.InitialUsableIPs; i++ {
 		f.AllocatePod(fmt.Sprintf("pod-partial-init-%d", i))
 	}
@@ -49,14 +50,16 @@ func TestPartialReleaseWithActivePods(t *testing.T) {
 		return len(ranges) == 3, fmt.Sprintf("ranges=%v", ranges)
 	})
 
-	// Targeted pod deletion: delete only the pod on the second dynamic block, leaving the first active.
+	// Targeted pod deletion: delete only the pod on the second dynamic block,
+	// leaving the first active.
 	f.DeletePod("pod-on-block-2")
 
 	// Partial release: release only dynamicBlock2.
 	f.SetAllocationsPods(32)
 	f.AddReleasableCIDR(dynamicBlock2)
 
-	// Selective removal: CCM removes only dynamicBlock2 and preserves dynamicBlock1 and initial block.
+	// Selective removal: CCM removes only dynamicBlock2 and preserves
+	// dynamicBlock1 and initial block.
 	f.Eventually("only dynamicBlock2 is removed; dynamicBlock1 and initial block are preserved", func() (bool, string) {
 		ranges := f.GCEAliasRanges()
 		currentNNC := f.NNC()

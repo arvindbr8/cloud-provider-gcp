@@ -40,7 +40,8 @@ func TestSequentialMultiBlockScaleUp(t *testing.T) {
 		t.Fatalf("overflow pod allocated from initial range; expected dynamic range")
 	}
 
-	// First dynamic block verification: wait for range to attach and status to publish.
+	// First dynamic block verification: wait for range to attach and status to
+	// publish.
 	f.Eventually("first dynamic range is attached and ready", func() (bool, string) {
 		currentNNC := f.NNC()
 		ranges := f.GCEAliasRanges()
@@ -48,8 +49,9 @@ func TestSequentialMultiBlockScaleUp(t *testing.T) {
 			fmt.Sprintf("ranges=%v status=%v blockState=%q", ranges, integration.StatusCIDRs(currentNNC), f.BlockState(dynCIDR1))
 	})
 
-	// First dynamic block saturation: fill remaining capacity of the first dynamic block.
-	// For secondary blocks, 0 IPs are reserved, so 15 additional pods can be allocated.
+	// First dynamic block saturation: fill remaining capacity of the first dynamic
+	// block. For secondary blocks, 0 IPs are reserved, so 15 additional pods can
+	// be allocated.
 	for i := 1; i <= 15; i++ {
 		_, c := f.AllocatePod(fmt.Sprintf("pod-seq-dyn1-%d", i))
 		if c != dynCIDR1 {
@@ -63,7 +65,8 @@ func TestSequentialMultiBlockScaleUp(t *testing.T) {
 		t.Fatalf("expected allocation from second dynamic block, got %s", dynCIDR2)
 	}
 
-	// Progressive watermarking verification: wait for second dynamic range to attach.
+	// Progressive watermarking verification: wait for second dynamic range to
+	// attach.
 	f.Eventually("second dynamic range is attached and ready", func() (bool, string) {
 		currentNNC := f.NNC()
 		ranges := f.GCEAliasRanges()

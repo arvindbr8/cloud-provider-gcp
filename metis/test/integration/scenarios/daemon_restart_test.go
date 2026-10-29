@@ -25,13 +25,14 @@ import (
 	"k8s.io/metis/test/integration"
 )
 
-// TestDaemonRestartRehydration verifies that stopping the daemon and starting
-// a fresh instance against the same database rehydrates state, reconciles with
+// TestDaemonRestartRehydration verifies that stopping the daemon and starting a
+// fresh instance against the same database rehydrates state, reconciles with
 // NNC without spurious scale-ups, and continues serving pod allocations.
 func TestDaemonRestartRehydration(t *testing.T) {
 	f := integration.NewFixture(t)
 
-	// Pre-restart capacity expansion: allocate initial pods and trigger a dynamic block.
+	// Pre-restart capacity expansion: allocate initial pods and trigger a dynamic
+	// block.
 	for i := 1; i <= integration.InitialUsableIPs; i++ {
 		f.AllocatePod(fmt.Sprintf("pod-rehydrate-init-%d", i))
 	}
@@ -43,17 +44,20 @@ func TestDaemonRestartRehydration(t *testing.T) {
 
 	allocationsBeforeRestart := f.NNC().Spec.Allocations
 
-	// Daemon lifecycle restart: restart daemon against the same SQLite database and NNC.
+	// Daemon lifecycle restart: restart daemon against the same SQLite database
+	// and NNC.
 	f.RestartDaemon()
 
-	// Rehydration verification: assert no spurious scale-up requests were generated.
+	// Rehydration verification: assert no spurious scale-up requests were
+	// generated.
 	f.Eventually("daemon rehydrates state and maintains stable allocations", func() (bool, string) {
 		currentNNC := f.NNC()
 		return integration.StatusReady(currentNNC) && apiequality.Semantic.DeepEqual(currentNNC.Spec.Allocations, allocationsBeforeRestart),
 			fmt.Sprintf("allocations=%v (want %v)", currentNNC.Spec.Allocations, allocationsBeforeRestart)
 	})
 
-	// Operational continuation: verify new pod can be allocated immediately from existing capacity.
+	// Operational continuation: verify new pod can be allocated immediately from
+	// existing capacity.
 	ipNew, cidrNew := f.AllocatePod("pod-rehydrate-post-restart")
 	if ipNew == "" || cidrNew == "" {
 		t.Fatalf("failed to allocate pod after daemon restart")

@@ -25,10 +25,11 @@ import (
 	"k8s.io/metis/test/integration"
 )
 
-// TestMixedAddAndRemove tests concurrent capacity expansion and release in a single
-// reconcile cycle. It simulates simultaneous workload growth on one network interface
-// while an idle CIDR block on another is marked for release, verifying that the CCM
-// spec controller processes additions and removals together without dropping either.
+// TestMixedAddAndRemove tests concurrent capacity expansion and release in a
+// single reconcile cycle. It simulates simultaneous workload growth on one
+// network interface while an idle CIDR block on another is marked for release,
+// verifying that the CCM spec controller processes additions and removals
+// together without dropping either.
 func TestMixedAddAndRemove(t *testing.T) {
 	f := integration.NewFixture(t)
 
@@ -48,9 +49,10 @@ func TestMixedAddAndRemove(t *testing.T) {
 	// Pod terminates on the dynamic block.
 	f.DeletePod("pod-to-release")
 
-	// Simultaneous scale-up and release: release dynamicCIDR while requesting 32 pods.
-	// Since dynamicCIDR is marked releasable, its capacity does not satisfy demand,
-	// prompting CCM to execute removal of dynamicCIDR and addition of a replacement block.
+	// Simultaneous scale-up and release: release dynamicCIDR while requesting 32
+	// pods. Since dynamicCIDR is marked releasable, its capacity does not satisfy
+	// demand, prompting CCM to execute removal of dynamicCIDR and addition of a
+	// replacement block.
 	nnc := f.NNC().DeepCopy()
 	nnc.Spec.Allocations[0].Pods = 32
 	nnc.Spec.ReleasableCIDRs = []nncv1.PodCIDR{
@@ -60,7 +62,8 @@ func TestMixedAddAndRemove(t *testing.T) {
 		t.Fatalf("failed to update NNC for mixed add/remove: %v", err)
 	}
 
-	// Reconcile execution: CCM removes dynamicCIDR, adds a new block, and prunes releasableCIDRs.
+	// Reconcile execution: CCM removes dynamicCIDR, adds a new block, and prunes
+	// releasableCIDRs.
 	f.Eventually("releasable CIDR is pruned and replacement range is attached", func() (bool, string) {
 		currentNNC := f.NNC()
 		ranges := f.GCEAliasRanges()
@@ -75,7 +78,8 @@ func TestMixedAddAndRemove(t *testing.T) {
 		return ok, fmt.Sprintf("releasables=%v ranges=%v statusReady=%v", releasables, ranges, integration.StatusReady(currentNNC))
 	})
 
-	// Status confirmation: status reflects two active ranges, excluding the released range.
+	// Status confirmation: status reflects two active ranges, excluding the
+	// released range.
 	finalNNC := f.NNC()
 	if integration.EqualSets(integration.StatusCIDRs(finalNNC), []string{integration.InitialPodCIDR, dynamicCIDR}) {
 		t.Fatalf("status still contains released CIDR %s", dynamicCIDR)

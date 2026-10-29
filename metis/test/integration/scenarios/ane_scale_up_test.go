@@ -37,13 +37,15 @@ func TestScaleUp_ANE(t *testing.T) {
 		f.AllocatePod(fmt.Sprintf("pod-ane-init-%d", i))
 	}
 
-	// ANE scale-up demand: an overflow pod triggers the daemon to request additional capacity.
+	// ANE scale-up demand: an overflow pod triggers the daemon to request
+	// additional capacity.
 	_, dynamicCIDR := f.AllocatePod("pod-ane-overflow")
 	if dynamicCIDR == integration.InitialPodCIDR {
 		t.Fatalf("overflow pod allocated from initial range; expected an ANE /32 allocation")
 	}
 
-	// Verification of ANE allocation: GCE creates /32 ANE, status publishes /32 with NonReusable policy.
+	// Verification of ANE allocation: GCE creates /32 ANE, status publishes /32
+	// with NonReusable policy.
 	f.Eventually("GCE creates ANE and status publishes /32 with NonReusable policy", func() (bool, string) {
 		currentNNC := f.NNC()
 		anes := f.GCEANEs()

@@ -39,8 +39,8 @@ func TestBootstrapAllocation(t *testing.T) {
 		t.Fatalf("pod allocated from %s, want initial range %s", cidr, integration.InitialPodCIDR)
 	}
 
-	// Convergence: CCM discovers the initial range on the VM and publishes
-	// Ready status.
+	// Convergence: CCM discovers the initial range on the VM and publishes Ready
+	// status.
 	f.Eventually("CCM publishes initial range with Ready=True", func() (bool, string) {
 		nnc := f.NNC()
 		return integration.EqualSets(integration.StatusCIDRs(nnc), []string{integration.InitialPodCIDR}) && integration.StatusReady(nnc),

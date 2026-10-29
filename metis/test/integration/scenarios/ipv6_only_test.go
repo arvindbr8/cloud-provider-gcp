@@ -24,9 +24,9 @@ import (
 	"k8s.io/metis/test/integration"
 )
 
-// TestIPv6Only_BootstrapAndAllocation tests a single-stack IPv6 cluster where the
-// node is initialized with only an IPv6 CIDR prefix and pod allocations request
-// exclusively IPv6 addresses with no IPv4 configuration.
+// TestIPv6Only_BootstrapAndAllocation tests a single-stack IPv6 cluster where
+// the node is initialized with only an IPv6 CIDR prefix and pod allocations
+// request exclusively IPv6 addresses with no IPv4 configuration.
 func TestIPv6Only_BootstrapAndAllocation(t *testing.T) {
 	f := integration.NewFixture(t, integration.WithStackType(integration.StackTypeIPv6Only))
 

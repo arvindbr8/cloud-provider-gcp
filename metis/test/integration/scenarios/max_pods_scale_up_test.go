@@ -23,11 +23,12 @@ import (
 	"k8s.io/metis/test/integration"
 )
 
-// TestMaxPodsScaleUp_512Pods tests dynamic scale-up up to GKE's maximum supported
-// capacity of 512 pods per node. It verifies that when capacity demand expands to
-// 512 pods, the CCM spec controller attaches the full complement of dynamic CIDR
-// blocks (32 x /28 alias ranges) to the GCE instance, the status controller publishes
-// all 32 ranges, and Metis ingests the blocks to achieve 512 total IP capacity.
+// TestMaxPodsScaleUp_512Pods tests dynamic scale-up up to GKE's maximum
+// supported capacity of 512 pods per node. It verifies that when capacity
+// demand expands to 512 pods, the CCM spec controller attaches the full
+// complement of dynamic CIDR blocks (32 x /28 alias ranges) to the GCE
+// instance, the status controller publishes all 32 ranges, and Metis ingests
+// the blocks to achieve 512 total IP capacity.
 func TestMaxPodsScaleUp_512Pods(t *testing.T) {
 	f := integration.NewFixture(t)
 
@@ -38,7 +39,8 @@ func TestMaxPodsScaleUp_512Pods(t *testing.T) {
 	const targetMaxPods = 512
 	f.SetAllocationsPods(targetMaxPods)
 
-	// Multi-block expansion verification: 512 total IPs requires 32 blocks of /28 (16 IPs each).
+	// Multi-block expansion verification: 512 total IPs requires 32 blocks of /28
+	// (16 IPs each).
 	const expectedTotalBlocks = 32
 	f.Eventually("GCE and NNC status expand to 32 alias ranges (512 total IPs)", func() (bool, string) {
 		nnc := f.NNC()
@@ -48,13 +50,15 @@ func TestMaxPodsScaleUp_512Pods(t *testing.T) {
 		return ok, fmt.Sprintf("gceRanges=%d statusCIDRs=%d ready=%v", len(ranges), len(cidrs), integration.StatusReady(nnc))
 	})
 
-	// Store capacity verification: Metis SQLite store reflects 512 total IP capacity.
+	// Store capacity verification: Metis SQLite store reflects 512 total IP
+	// capacity.
 	f.Eventually("Metis SQLite store registers full 512 IP capacity", func() (bool, string) {
 		u := f.Usage()
 		return u.Total == targetMaxPods, fmt.Sprintf("usage.Total=%d (want %d)", u.Total, targetMaxPods)
 	})
 
-	// Allocation verification at scale: allocate pods across the expanded capacity.
+	// Allocation verification at scale: allocate pods across the expanded
+	// capacity.
 	for i := 1; i <= 10; i++ {
 		ip, cidr := f.AllocatePod(fmt.Sprintf("pod-scaled-%d", i))
 		if ip == "" || cidr == "" {

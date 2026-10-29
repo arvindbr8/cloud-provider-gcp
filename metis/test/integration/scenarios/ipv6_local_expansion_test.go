@@ -24,14 +24,15 @@ import (
 	"k8s.io/metis/test/integration"
 )
 
-// TestIPv6_LocalExpansionWithoutCloudCall verifies that when IPv6 pod demand exceeds
-// the initial populated batch (64 addresses), Metis scales up locally by expanding
-// the block directly in its SQLite store without issuing cloud scale-up requests in
-// NodeNetworkConfig spec or invoking GCE APIs.
+// TestIPv6_LocalExpansionWithoutCloudCall verifies that when IPv6 pod demand
+// exceeds the initial populated batch (64 addresses), Metis scales up locally
+// by expanding the block directly in its SQLite store without issuing cloud
+// scale-up requests in NodeNetworkConfig spec or invoking GCE APIs.
 func TestIPv6_LocalExpansionWithoutCloudCall(t *testing.T) {
 	f := integration.NewFixture(t, integration.WithStackType(integration.StackTypeIPv6Only))
 
-	// Initial batch saturation: allocate 64 pods to exhaust the store's initial populated batch.
+	// Initial batch saturation: allocate 64 pods to exhaust the store's initial
+	// populated batch.
 	for i := 1; i <= 64; i++ {
 		ip, cidr := f.AllocatePod(fmt.Sprintf("pod-ipv6-%d", i))
 		if ip == "" {
@@ -42,7 +43,8 @@ func TestIPv6_LocalExpansionWithoutCloudCall(t *testing.T) {
 		}
 	}
 
-	// Local batch expansion trigger: allocate the 65th pod to trigger expandIPv6Block in SQLite.
+	// Local batch expansion trigger: allocate the 65th pod to trigger
+	// expandIPv6Block in SQLite.
 	ip65, cidr65 := f.AllocatePod("pod-ipv6-65-overflow")
 	if ip65 == "" {
 		t.Fatalf("overflow pod allocated empty IP")
@@ -51,7 +53,8 @@ func TestIPv6_LocalExpansionWithoutCloudCall(t *testing.T) {
 		t.Fatalf("overflow pod allocated from %s, want %s", cidr65, integration.InitialPodCIDRv6)
 	}
 
-	// Cloud provider quiescence verification: assert NNC spec allocations remain untouched.
+	// Cloud provider quiescence verification: assert NNC spec allocations remain
+	// untouched.
 	f.Consistently("NNC spec allocations remains empty with zero cloud scale-up calls", 300*time.Millisecond, func() (bool, string) {
 		currentNNC := f.NNC()
 		hasCloudScaleUp := false
@@ -65,7 +68,8 @@ func TestIPv6_LocalExpansionWithoutCloudCall(t *testing.T) {
 			fmt.Sprintf("hasCloudScaleUp=%v gceRanges=%v", hasCloudScaleUp, ranges)
 	})
 
-	// Store verification: assert IPv6 usage in SQLite reflects 65 allocated addresses.
+	// Store verification: assert IPv6 usage in SQLite reflects 65 allocated
+	// addresses.
 	usage := f.IPv6Usage()
 	if usage.Allocated != 65 {
 		t.Fatalf("expected 65 allocated IPv6 addresses in store, got %d", usage.Allocated)

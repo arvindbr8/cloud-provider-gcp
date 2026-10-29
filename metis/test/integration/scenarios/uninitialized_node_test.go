@@ -24,13 +24,14 @@ import (
 	"k8s.io/metis/test/integration"
 )
 
-// TestNotReadyNodeHandling tests controller behavior during early node registration
-// before ProviderID is initialized. It verifies that the controllers safely defer
-// reconciliation with nodeNotReadyError while ProviderID is empty, emit appropriate
-// warning events, and automatically resume reconciliation once the node's ProviderID
-// is assigned.
+// TestNotReadyNodeHandling tests controller behavior during early node
+// registration before ProviderID is initialized. It verifies that the
+// controllers safely defer reconciliation with nodeNotReadyError while
+// ProviderID is empty, emit appropriate warning events, and automatically
+// resume reconciliation once the node's ProviderID is assigned.
 func TestNotReadyNodeHandling(t *testing.T) {
-	// Uninitialized node startup: launch controllers with a node lacking ProviderID.
+	// Uninitialized node startup: launch controllers with a node lacking
+	// ProviderID.
 	f := integration.NewFixture(t, integration.WithNodeProviderID(""))
 
 	// Initial check: status is not yet ready because node has empty ProviderID.
@@ -43,7 +44,8 @@ func TestNotReadyNodeHandling(t *testing.T) {
 	// Node readiness: cloud-node-controller assigns ProviderID to the Node.
 	f.UpdateNodeProviderID(integration.ProviderID)
 
-	// Successful reconciliation: controllers proceed with reconciliation once Node is ready.
+	// Successful reconciliation: controllers proceed with reconciliation once Node
+	// is ready.
 	f.Eventually("CCM publishes Ready status after ProviderID is set", func() (bool, string) {
 		currentNNC := f.NNC()
 		return integration.StatusReady(currentNNC) && integration.EqualSets(integration.StatusCIDRs(currentNNC), []string{integration.InitialPodCIDR}),

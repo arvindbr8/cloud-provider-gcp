@@ -49,7 +49,8 @@ func TestIPReuseAndChurn(t *testing.T) {
 		t.Fatalf("expected CIDR %s, got %s", cidr1, cidr2)
 	}
 
-	// Verification of zero cloud provider churn: GCE ranges and NNC spec unchanged.
+	// Verification of zero cloud provider churn: GCE ranges and NNC spec
+	// unchanged.
 	aliasRanges := f.GCEAliasRanges()
 	if len(aliasRanges) != 1 || aliasRanges[0] != integration.InitialPodCIDR {
 		t.Fatalf("unexpected GCE alias ranges: %v", aliasRanges)

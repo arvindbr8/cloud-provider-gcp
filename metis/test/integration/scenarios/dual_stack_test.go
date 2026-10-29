@@ -26,13 +26,14 @@ import (
 )
 
 // TestDualStack_IPv4ScaleUpWithLocalIPv6Expansion tests concurrent dual-stack
-// pod IP allocation where IPv4 capacity exhausts and scales up dynamically through
-// GCE and NNC, while IPv6 addresses are assigned concurrently from the local IPv6
-// pool without triggering cloud requests.
+// pod IP allocation where IPv4 capacity exhausts and scales up dynamically
+// through GCE and NNC, while IPv6 addresses are assigned concurrently from the
+// local IPv6 pool without triggering cloud requests.
 func TestDualStack_IPv4ScaleUpWithLocalIPv6Expansion(t *testing.T) {
 	f := integration.NewFixture(t, integration.WithStackType(integration.StackTypeDualStack))
 
-	// Bootstrap saturation: allocate pods with dual-stack IPs until IPv4 capacity exhausts.
+	// Bootstrap saturation: allocate pods with dual-stack IPs until IPv4 capacity
+	// exhausts.
 	for i := 1; i <= integration.InitialUsableIPs; i++ {
 		v4IP, v4CIDR, v6IP, v6CIDR := f.AllocateDualStackPod(fmt.Sprintf("pod-dual-%d", i))
 		if net.ParseIP(v4IP).To4() == nil {
@@ -49,7 +50,8 @@ func TestDualStack_IPv4ScaleUpWithLocalIPv6Expansion(t *testing.T) {
 		}
 	}
 
-	// Dual-stack overflow: the next pod triggers dynamic IPv4 scale-up while IPv6 allocates locally.
+	// Dual-stack overflow: the next pod triggers dynamic IPv4 scale-up while IPv6
+	// allocates locally.
 	v4OverflowIP, v4DynCIDR, v6OverflowIP, v6DynCIDR := f.AllocateDualStackPod("pod-dual-overflow")
 	if v4DynCIDR == integration.InitialPodCIDR {
 		t.Fatalf("overflow pod allocated from initial IPv4 range; expected dynamic range")
@@ -61,7 +63,8 @@ func TestDualStack_IPv4ScaleUpWithLocalIPv6Expansion(t *testing.T) {
 		t.Fatalf("invalid IP returned: v4=%s v6=%s", v4OverflowIP, v6OverflowIP)
 	}
 
-	// Verification of infrastructure state: GCE reflects two IPv4 ranges, status publishes both.
+	// Verification of infrastructure state: GCE reflects two IPv4 ranges, status
+	// publishes both.
 	f.Eventually("GCE and NNC status reflect two IPv4 ranges", func() (bool, string) {
 		nnc := f.NNC()
 		wantV4 := []string{integration.InitialPodCIDR, v4DynCIDR}
