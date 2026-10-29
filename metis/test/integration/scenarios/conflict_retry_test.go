@@ -44,7 +44,7 @@ func TestConflictRetryOnStatusUpdate(t *testing.T) {
 			conflictInjected = true
 			return true, nil, apierrors.NewConflict(
 				schema.GroupResource{Group: "networking.gke.io", Resource: "nodenetworkconfigs"},
-				integration.NodeName, fmt.Errorf("simulated status conflict error"))
+				integration.PrimaryNodeName, fmt.Errorf("simulated status conflict error"))
 		}
 		conflictResolved = true
 		return false, nil, nil
