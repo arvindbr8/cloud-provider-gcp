@@ -45,7 +45,7 @@ func TestSteadyStateAllocation(t *testing.T) {
 	currentNNC := f.NNC()
 	if allocations := currentNNC.Spec.Allocations; len(allocations) > 0 {
 		for _, a := range allocations {
-			if a.Network == integration.Network && a.Pods > int32(integration.InitialUsableIPs) {
+			if a.Network == f.DefaultNetworkName() && a.Pods > int32(integration.InitialUsableIPs) {
 				t.Fatalf("unexpected scale-up request in NNC spec: %v", a.Pods)
 			}
 		}

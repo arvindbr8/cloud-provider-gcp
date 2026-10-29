@@ -56,7 +56,7 @@ func TestMixedAddAndRemove(t *testing.T) {
 	nnc := f.NNC().DeepCopy()
 	nnc.Spec.Allocations[0].Pods = 32
 	nnc.Spec.ReleasableCIDRs = []nncv1.PodCIDR{
-		{Network: integration.Network, CIDR: dynamicCIDR},
+		{Network: f.DefaultNetworkName(), CIDR: dynamicCIDR},
 	}
 	if _, err := f.NNCClient().NetworkingV1().NodeNetworkConfigs().Update(f.Ctx(), nnc, metav1.UpdateOptions{}); err != nil {
 		t.Fatalf("failed to update NNC for mixed add/remove: %v", err)

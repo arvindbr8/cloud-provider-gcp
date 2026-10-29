@@ -35,7 +35,7 @@ func TestMultiNodeConcurrentScaleUpBurst(t *testing.T) {
 
 	// Cluster provisioning: initialize 5 distinct nodes in the cluster.
 	nodes := []*integration.NodeHandle{
-		f.PrimaryNode(),
+		f.DefaultNode(),
 		f.AddNode("worker-2", "10.0.1.0/28"),
 		f.AddNode("worker-3", "10.0.2.0/28"),
 		f.AddNode("worker-4", "10.0.3.0/28"),

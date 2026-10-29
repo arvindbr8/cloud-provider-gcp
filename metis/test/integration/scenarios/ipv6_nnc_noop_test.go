@@ -40,7 +40,7 @@ func TestIPv6_NNCStatusCIDRIgnoredByMetis(t *testing.T) {
 	ignoredIPv6CIDR := "2001:db8:99::/112"
 	nnc := f.NNC().DeepCopy()
 	nnc.Status.PodCIDRs = append(nnc.Status.PodCIDRs, nncv1.PodCIDR{
-		Network: integration.Network,
+		Network: f.DefaultNetworkName(),
 		CIDR:    ignoredIPv6CIDR,
 	})
 	if _, err := f.NNCClient().NetworkingV1().NodeNetworkConfigs().UpdateStatus(f.Ctx(), nnc, metav1.UpdateOptions{}); err != nil {

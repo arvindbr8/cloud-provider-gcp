@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientgotesting "k8s.io/client-go/testing"
@@ -43,9 +44,15 @@ func TestConflictRetryOnStatusUpdate(t *testing.T) {
 		}
 		if !conflictInjected {
 			conflictInjected = true
+			var name string
+			if updateAct, ok := action.(clientgotesting.UpdateAction); ok {
+				if obj, ok := updateAct.GetObject().(metav1.Object); ok {
+					name = obj.GetName()
+				}
+			}
 			return true, nil, apierrors.NewConflict(
 				schema.GroupResource{Group: "networking.gke.io", Resource: "nodenetworkconfigs"},
-				integration.PrimaryNodeName, fmt.Errorf("simulated status conflict error"))
+				name, fmt.Errorf("simulated status conflict error"))
 		}
 		conflictResolved = true
 		return false, nil, nil

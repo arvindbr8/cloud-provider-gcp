@@ -42,7 +42,7 @@ func TestNotReadyNodeHandling(t *testing.T) {
 	}
 
 	// Node readiness: cloud-node-controller assigns ProviderID to the Node.
-	f.UpdateNodeProviderID(integration.ProviderID)
+	f.UpdateNodeProviderID(integration.NodeProviderID(f.DefaultNode().Name()))
 
 	// Successful reconciliation: controllers proceed with reconciliation once Node
 	// is ready.
