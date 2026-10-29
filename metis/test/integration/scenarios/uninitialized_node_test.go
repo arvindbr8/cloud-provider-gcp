@@ -17,7 +17,6 @@ limitations under the License.
 package scenarios
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -46,15 +45,9 @@ func TestNotReadyNodeHandling(t *testing.T) {
 
 	// Successful reconciliation: controllers proceed with reconciliation once Node
 	// is ready.
-	f.Eventually("CCM publishes Ready status after ProviderID is set", func() (bool, string) {
+	f.Eventually("CCM publishes Ready status after ProviderID is set", func(a *integration.Assert) {
 		currentNNC := f.NNC()
-		var unmet []string
-		if !integration.StatusReady(currentNNC) {
-			unmet = append(unmet, "NNC Ready condition is false")
-		}
-		if !integration.EqualSets(integration.StatusCIDRs(currentNNC), []string{integration.InitialPodCIDR}) {
-			unmet = append(unmet, fmt.Sprintf("NNC status CIDRs: got %v, want %v", integration.StatusCIDRs(currentNNC), []string{integration.InitialPodCIDR}))
-		}
-		return integration.FormatUnmet(unmet)
+		a.True("NNC Ready condition", integration.StatusReady(currentNNC))
+		a.EqualSets("NNC status CIDRs", integration.StatusCIDRs(currentNNC), []string{integration.InitialPodCIDR})
 	})
 }

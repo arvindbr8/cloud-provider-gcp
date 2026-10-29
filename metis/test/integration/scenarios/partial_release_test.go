@@ -45,9 +45,8 @@ func TestPartialReleaseWithActivePods(t *testing.T) {
 		t.Fatalf("expected distinct blocks: init=%s b1=%s b2=%s", integration.InitialPodCIDR, dynamicBlock1, dynamicBlock2)
 	}
 
-	f.Eventually("three distinct ranges active in GCE and status", func() (bool, string) {
-		ranges := f.GCEAliasRanges()
-		return len(ranges) == 3, fmt.Sprintf("ranges=%v", ranges)
+	f.Eventually("three distinct ranges active in GCE and status", func(a *integration.Assert) {
+		a.Equal("ranges count", len(f.GCEAliasRanges()), 3)
 	})
 
 	// Targeted pod deletion: delete only the pod on the second dynamic block,
@@ -60,20 +59,11 @@ func TestPartialReleaseWithActivePods(t *testing.T) {
 
 	// Selective removal: CCM removes only dynamicBlock2 and preserves
 	// dynamicBlock1 and initial block.
-	f.Eventually("only dynamicBlock2 is removed; dynamicBlock1 and initial block are preserved", func() (bool, string) {
-		ranges := f.GCEAliasRanges()
+	f.Eventually("only dynamicBlock2 is removed; dynamicBlock1 and initial block are preserved", func(a *integration.Assert) {
 		currentNNC := f.NNC()
 		want := []string{integration.InitialPodCIDR, dynamicBlock1}
-		var unmet []string
-		if !integration.EqualSets(ranges, want) {
-			unmet = append(unmet, fmt.Sprintf("GCE alias ranges: got %v, want %v", ranges, want))
-		}
-		if !integration.EqualSets(integration.StatusCIDRs(currentNNC), want) {
-			unmet = append(unmet, fmt.Sprintf("NNC status CIDRs: got %v, want %v", integration.StatusCIDRs(currentNNC), want))
-		}
-		if rel := integration.ReleasableCIDRs(currentNNC); len(rel) != 0 {
-			unmet = append(unmet, fmt.Sprintf("NNC releasableCIDRs: got %v, want empty", rel))
-		}
-		return integration.FormatUnmet(unmet)
+		a.EqualSets("GCE alias ranges", f.GCEAliasRanges(), want)
+		a.EqualSets("NNC status CIDRs", integration.StatusCIDRs(currentNNC), want)
+		a.Equal("NNC releasableCIDRs length", len(integration.ReleasableCIDRs(currentNNC)), 0)
 	})
 }

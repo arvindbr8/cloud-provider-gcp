@@ -46,9 +46,8 @@ func TestScaleUp_ANE(t *testing.T) {
 
 	// Verification of ANE allocation: GCE creates /32 ANE, status publishes /32
 	// with NonReusable policy.
-	f.Eventually("GCE creates ANE and status publishes /32 with NonReusable policy", func() (bool, string) {
+	f.Eventually("GCE creates ANE and status publishes /32 with NonReusable policy", func(a *integration.Assert) {
 		currentNNC := f.NNC()
-		anes := f.GCEANEs()
 		hasStatus32 := false
 		for _, pc := range currentNNC.Status.PodCIDRs {
 			if pc.CIDR == dynamicCIDR && pc.ReusePolicy == nncv1.PodCIDRTypeNonReusable {
@@ -56,19 +55,9 @@ func TestScaleUp_ANE(t *testing.T) {
 				break
 			}
 		}
-		var unmet []string
-		if len(anes) == 0 {
-			unmet = append(unmet, "GCE has 0 ANEs, want > 0")
-		}
-		if !hasStatus32 {
-			unmet = append(unmet, fmt.Sprintf("NNC status missing NonReusable /32 CIDR %s", dynamicCIDR))
-		}
-		if !integration.StatusReady(currentNNC) {
-			unmet = append(unmet, "NNC Ready condition is false")
-		}
-		if state := f.BlockState(dynamicCIDR); state != store.StateReady {
-			unmet = append(unmet, fmt.Sprintf("DB block state: got %s, want %s", state, store.StateReady))
-		}
-		return integration.FormatUnmet(unmet)
+		a.True("GCE has ANEs", len(f.GCEANEs()) > 0)
+		a.True("NNC status has NonReusable /32 CIDR", hasStatus32)
+		a.True("NNC Ready condition", integration.StatusReady(currentNNC))
+		a.Equal("DB block state", f.BlockState(dynamicCIDR), store.StateReady)
 	})
 }

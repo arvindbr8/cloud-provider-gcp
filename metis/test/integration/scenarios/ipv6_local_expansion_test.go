@@ -55,17 +55,16 @@ func TestIPv6_LocalExpansionWithoutCloudCall(t *testing.T) {
 
 	// Cloud provider quiescence verification: assert NNC spec allocations remain
 	// untouched.
-	f.Consistently("NNC spec allocations remains empty with zero cloud scale-up calls", 300*time.Millisecond, func() (bool, string) {
+	f.Consistently("NNC spec allocations remains empty with zero cloud scale-up calls", 300*time.Millisecond, func(a *integration.Assert) {
 		currentNNC := f.NNC()
 		hasCloudScaleUp := false
-		for _, a := range currentNNC.Spec.Allocations {
-			if a.Pods > 0 {
+		for _, alloc := range currentNNC.Spec.Allocations {
+			if alloc.Pods > 0 {
 				hasCloudScaleUp = true
 			}
 		}
-		ranges := f.GCEAliasRanges()
-		return !hasCloudScaleUp && len(ranges) == 0,
-			fmt.Sprintf("hasCloudScaleUp=%v gceRanges=%v", hasCloudScaleUp, ranges)
+		a.False("hasCloudScaleUp", hasCloudScaleUp)
+		a.Equal("gceRanges length", len(f.GCEAliasRanges()), 0)
 	})
 
 	// Store verification: assert IPv6 usage in SQLite reflects 65 allocated

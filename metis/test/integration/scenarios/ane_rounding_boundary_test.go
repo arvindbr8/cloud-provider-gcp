@@ -49,8 +49,8 @@ func TestScaleDown_ANE_RoundingBoundary(t *testing.T) {
 	if dynamicCIDR == integration.InitialPodCIDR {
 		t.Fatalf("overflow pod allocated from initial range; expected an ANE /32 allocation")
 	}
-	f.Eventually("ANEs are attached to GCE", func() (bool, string) {
-		return len(f.GCEANEs()) > 0, fmt.Sprintf("anes=%d", len(f.GCEANEs()))
+	f.Eventually("ANEs are attached to GCE", func(a *integration.Assert) {
+		a.True("ANEs attached", len(f.GCEANEs()) > 0)
 	})
 
 	// Pod deletion to reach the fractional threshold boundary: Deleting the
@@ -66,8 +66,7 @@ func TestScaleDown_ANE_RoundingBoundary(t *testing.T) {
 
 	// Boundary release verification: idle ANEs should be drained and detached from
 	// GCE.
-	f.Eventually("idle ANEs are drained and removed from GCE", func() (bool, string) {
-		anes := f.GCEANEs()
-		return len(anes) == 0, fmt.Sprintf("anes remaining: %d", len(anes))
+	f.Eventually("idle ANEs are drained and removed from GCE", func(a *integration.Assert) {
+		a.Equal("anes remaining", len(f.GCEANEs()), 0)
 	})
 }

@@ -17,7 +17,6 @@ limitations under the License.
 package scenarios
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -49,8 +48,7 @@ func TestIPv6_NNCStatusCIDRIgnoredByMetis(t *testing.T) {
 
 	// Verification of daemon watcher no-op: assert the IPv6 block is never created
 	// in SQLite.
-	f.Consistently("injected IPv6 CIDR is ignored by Metis watcher and absent from SQLite store", 300*time.Millisecond, func() (bool, string) {
-		exists := f.BlockExists(ignoredIPv6CIDR)
-		return !exists, fmt.Sprintf("blockExists(%s)=%v", ignoredIPv6CIDR, exists)
+	f.Consistently("injected IPv6 CIDR is ignored by Metis watcher and absent from SQLite store", 300*time.Millisecond, func(a *integration.Assert) {
+		a.False("blockExists", f.BlockExists(ignoredIPv6CIDR))
 	})
 }

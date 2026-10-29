@@ -63,18 +63,10 @@ func TestConflictRetryOnStatusUpdate(t *testing.T) {
 
 	// Reconcile resilience: status controller retries on conflict and completes
 	// status publish.
-	f.Eventually("status publish succeeds despite initial 409 conflict", func() (bool, string) {
+	f.Eventually("status publish succeeds despite initial 409 conflict", func(a *integration.Assert) {
 		nnc := f.NNC()
-		var unmet []string
-		if !conflictResolved {
-			unmet = append(unmet, "conflict has not yet been triggered and resolved")
-		}
-		if !integration.StatusReady(nnc) {
-			unmet = append(unmet, "NNC Ready condition is false")
-		}
-		if cidrs := integration.StatusCIDRs(nnc); len(cidrs) != 1 {
-			unmet = append(unmet, fmt.Sprintf("NNC status CIDRs count: got %d, want 1", len(cidrs)))
-		}
-		return integration.FormatUnmet(unmet)
+		a.True("conflict resolved", conflictResolved)
+		a.True("NNC Ready condition", integration.StatusReady(nnc))
+		a.Equal("NNC status CIDRs count", len(integration.StatusCIDRs(nnc)), 1)
 	})
 }

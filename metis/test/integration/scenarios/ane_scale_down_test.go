@@ -53,20 +53,10 @@ func TestScaleDown_ANE(t *testing.T) {
 
 	// Infrastructure release: CCM detaches the ANE from GCE and prunes
 	// releasableCIDRs.
-	f.Eventually("GCE removes ANE and CCM prunes releasableCIDRs", func() (bool, string) {
-		anes := f.GCEANEs()
+	f.Eventually("GCE removes ANE and CCM prunes releasableCIDRs", func(a *integration.Assert) {
 		currentNNC := f.NNC()
-		rel := integration.ReleasableCIDRs(currentNNC)
-		var unmet []string
-		if len(anes) != 0 {
-			unmet = append(unmet, fmt.Sprintf("GCE ANEs: got %d, want 0", len(anes)))
-		}
-		if len(rel) != 0 {
-			unmet = append(unmet, fmt.Sprintf("NNC releasableCIDRs: got %v, want empty", rel))
-		}
-		if !integration.EqualSets(integration.StatusCIDRs(currentNNC), []string{integration.InitialPodCIDR}) {
-			unmet = append(unmet, fmt.Sprintf("NNC status CIDRs: got %v, want %v", integration.StatusCIDRs(currentNNC), []string{integration.InitialPodCIDR}))
-		}
-		return integration.FormatUnmet(unmet)
+		a.Equal("GCE ANEs length", len(f.GCEANEs()), 0)
+		a.Equal("NNC releasableCIDRs length", len(integration.ReleasableCIDRs(currentNNC)), 0)
+		a.EqualSets("NNC status CIDRs", integration.StatusCIDRs(currentNNC), []string{integration.InitialPodCIDR})
 	})
 }

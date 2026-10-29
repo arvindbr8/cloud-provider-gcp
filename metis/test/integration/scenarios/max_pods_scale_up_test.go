@@ -42,28 +42,17 @@ func TestMaxPodsScaleUp_512Pods(t *testing.T) {
 	// Multi-block expansion verification: 512 total IPs requires 32 blocks of /28
 	// (16 IPs each).
 	const expectedTotalBlocks = 32
-	f.Eventually("GCE and NNC status expand to 32 alias ranges (512 total IPs)", func() (bool, string) {
+	f.Eventually("GCE and NNC status expand to 32 alias ranges (512 total IPs)", func(a *integration.Assert) {
 		nnc := f.NNC()
-		ranges := f.GCEAliasRanges()
-		cidrs := integration.StatusCIDRs(nnc)
-		var unmet []string
-		if len(ranges) != expectedTotalBlocks {
-			unmet = append(unmet, fmt.Sprintf("GCE alias ranges count: got %d, want %d", len(ranges), expectedTotalBlocks))
-		}
-		if len(cidrs) != expectedTotalBlocks {
-			unmet = append(unmet, fmt.Sprintf("NNC status CIDRs count: got %d, want %d", len(cidrs), expectedTotalBlocks))
-		}
-		if !integration.StatusReady(nnc) {
-			unmet = append(unmet, "NNC Ready condition is false")
-		}
-		return integration.FormatUnmet(unmet)
+		a.Equal("GCE alias ranges count", len(f.GCEAliasRanges()), expectedTotalBlocks)
+		a.Equal("NNC status CIDRs count", len(integration.StatusCIDRs(nnc)), expectedTotalBlocks)
+		a.True("NNC Ready condition", integration.StatusReady(nnc))
 	})
 
 	// Store capacity verification: Metis SQLite store reflects 512 total IP
 	// capacity.
-	f.Eventually("Metis SQLite store registers full 512 IP capacity", func() (bool, string) {
-		u := f.Usage()
-		return u.Total == targetMaxPods, fmt.Sprintf("usage.Total=%d (want %d)", u.Total, targetMaxPods)
+	f.Eventually("Metis SQLite store registers full 512 IP capacity", func(a *integration.Assert) {
+		a.Equal("usage.Total", f.Usage().Total, targetMaxPods)
 	})
 
 	// Allocation verification at scale: allocate pods across the expanded

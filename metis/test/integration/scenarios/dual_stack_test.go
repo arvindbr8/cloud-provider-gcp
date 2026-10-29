@@ -65,23 +65,13 @@ func TestDualStack_IPv4ScaleUpWithLocalIPv6Expansion(t *testing.T) {
 
 	// Verification of infrastructure state: GCE reflects two IPv4 ranges, status
 	// publishes both.
-	f.Eventually("GCE and NNC status reflect two IPv4 ranges", func() (bool, string) {
+	f.Eventually("GCE and NNC status reflect two IPv4 ranges", func(a *integration.Assert) {
 		nnc := f.NNC()
 		wantV4 := []string{integration.InitialPodCIDR, v4DynCIDR}
-		var unmet []string
-		if !integration.EqualSets(f.GCEAliasRanges(), wantV4) {
-			unmet = append(unmet, fmt.Sprintf("GCE alias ranges: got %v, want %v", f.GCEAliasRanges(), wantV4))
-		}
-		if !integration.EqualSets(integration.StatusCIDRs(nnc), wantV4) {
-			unmet = append(unmet, fmt.Sprintf("NNC status CIDRs: got %v, want %v", integration.StatusCIDRs(nnc), wantV4))
-		}
-		if !integration.StatusReady(nnc) {
-			unmet = append(unmet, "NNC Ready condition is false")
-		}
-		if state := f.BlockState(v4DynCIDR); state != store.StateReady {
-			unmet = append(unmet, fmt.Sprintf("DB block state: got %s, want %s", state, store.StateReady))
-		}
-		return integration.FormatUnmet(unmet)
+		a.EqualSets("GCE alias ranges", f.GCEAliasRanges(), wantV4)
+		a.EqualSets("NNC status CIDRs", integration.StatusCIDRs(nnc), wantV4)
+		a.True("NNC Ready condition", integration.StatusReady(nnc))
+		a.Equal("DB block state", f.BlockState(v4DynCIDR), store.StateReady)
 	})
 
 	// Verification of SQLite usage: both IPv4 and IPv6 reflect 14 active pods.

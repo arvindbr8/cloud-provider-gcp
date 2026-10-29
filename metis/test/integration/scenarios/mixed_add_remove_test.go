@@ -18,6 +18,7 @@ package scenarios
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 
 	nncv1 "github.com/GoogleCloudPlatform/gke-networking-api/apis/nodenetworkconfig/v1"
@@ -42,8 +43,8 @@ func TestMixedAddAndRemove(t *testing.T) {
 		t.Fatalf("expected dynamically added range")
 	}
 
-	f.Eventually("baseline two blocks established in GCE", func() (bool, string) {
-		return len(f.GCEAliasRanges()) == 2, fmt.Sprintf("ranges=%v", f.GCEAliasRanges())
+	f.Eventually("baseline two blocks established in GCE", func(a *integration.Assert) {
+		a.Equal("GCE alias ranges count", len(f.GCEAliasRanges()), 2)
 	})
 
 	// Pod terminates on the dynamic block.
@@ -64,30 +65,15 @@ func TestMixedAddAndRemove(t *testing.T) {
 
 	// Reconcile execution: CCM removes dynamicCIDR, adds a new block, and prunes
 	// releasableCIDRs.
-	f.Eventually("releasable CIDR is pruned and replacement range is attached", func() (bool, string) {
+	f.Eventually("releasable CIDR is pruned and replacement range is attached", func(a *integration.Assert) {
 		currentNNC := f.NNC()
 		ranges := f.GCEAliasRanges()
-		releasables := integration.ReleasableCIDRs(currentNNC)
-		hasOld := false
-		for _, r := range ranges {
-			if r == dynamicCIDR {
-				hasOld = true
-			}
-		}
-		var unmet []string
-		if len(releasables) != 0 {
-			unmet = append(unmet, fmt.Sprintf("NNC releasableCIDRs: got %v, want empty", releasables))
-		}
-		if len(ranges) != 2 {
-			unmet = append(unmet, fmt.Sprintf("GCE alias ranges count: got %d, want 2", len(ranges)))
-		}
-		if hasOld {
-			unmet = append(unmet, fmt.Sprintf("GCE ranges still contains released CIDR %s", dynamicCIDR))
-		}
-		if !integration.StatusReady(currentNNC) {
-			unmet = append(unmet, "NNC Ready condition is false")
-		}
-		return integration.FormatUnmet(unmet)
+		hasOld := slices.Contains(ranges, dynamicCIDR)
+
+		a.Equal("NNC releasableCIDRs length", len(integration.ReleasableCIDRs(currentNNC)), 0)
+		a.Equal("GCE alias ranges count", len(ranges), 2)
+		a.False("GCE ranges contains released CIDR", hasOld)
+		a.True("NNC Ready condition", integration.StatusReady(currentNNC))
 	})
 
 	// Status confirmation: status reflects two active ranges, excluding the

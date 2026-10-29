@@ -99,23 +99,13 @@ func TestMultiNodeConcurrentScaleUpBurst(t *testing.T) {
 
 	// Infrastructure convergence verification: all 5 nodes expand to 2 or more
 	// ranges and publish Ready=True.
-	f.Eventually("all 5 nodes expand in GCE and status with Ready=True", func() (bool, string) {
-		var unmet []string
+	f.Eventually("all 5 nodes expand in GCE and status with Ready=True", func(a *integration.Assert) {
 		for _, nh := range nodes {
-			ranges := nh.GCEAliasRanges()
 			nnc := nh.NNC()
-			cidrs := integration.StatusCIDRs(nnc)
-			if len(ranges) < 2 {
-				unmet = append(unmet, fmt.Sprintf("node %s GCE ranges: got %d, want >= 2", nh.Name(), len(ranges)))
-			}
-			if len(cidrs) < 2 {
-				unmet = append(unmet, fmt.Sprintf("node %s status CIDRs: got %d, want >= 2", nh.Name(), len(cidrs)))
-			}
-			if !integration.StatusReady(nnc) {
-				unmet = append(unmet, fmt.Sprintf("node %s Ready condition is false", nh.Name()))
-			}
+			a.Check(len(nh.GCEAliasRanges()) >= 2, "node %s GCE ranges: got %d, want >= 2", nh.Name(), len(nh.GCEAliasRanges()))
+			a.Check(len(integration.StatusCIDRs(nnc)) >= 2, "node %s status CIDRs: got %d, want >= 2", nh.Name(), len(integration.StatusCIDRs(nnc)))
+			a.Check(integration.StatusReady(nnc), "node %s Ready condition is false", nh.Name())
 		}
-		return integration.FormatUnmet(unmet)
 	})
 
 	// CIDR disjointness verification: ensure no dynamic CIDR is shared across any
