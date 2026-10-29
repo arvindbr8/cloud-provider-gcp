@@ -34,8 +34,8 @@ func TestMultiNodeConcurrentScaleUpBurst(t *testing.T) {
 	f := integration.NewFixture(t)
 
 	// Cluster provisioning: initialize 5 distinct nodes in the cluster.
-	nodes := []*integration.NodeHandle{
-		f.DefaultNode(),
+	nodes := []integration.Node{
+		f.FirstNode(),
 		f.AddNode("worker-2", "10.0.1.0/28"),
 		f.AddNode("worker-3", "10.0.2.0/28"),
 		f.AddNode("worker-4", "10.0.3.0/28"),
@@ -48,7 +48,7 @@ func TestMultiNodeConcurrentScaleUpBurst(t *testing.T) {
 	errCh := make(chan error, len(nodes)*integration.InitialUsableIPs)
 	for nodeIdx, node := range nodes {
 		wg.Add(1)
-		go func(idx int, nh *integration.NodeHandle) {
+		go func(idx int, nh integration.Node) {
 			defer wg.Done()
 			for i := 1; i <= integration.InitialUsableIPs; i++ {
 				podName := fmt.Sprintf("pod-node%d-init-%d", idx+1, i)
@@ -74,7 +74,7 @@ func TestMultiNodeConcurrentScaleUpBurst(t *testing.T) {
 
 	for nodeIdx, node := range nodes {
 		wg.Add(1)
-		go func(idx int, nh *integration.NodeHandle) {
+		go func(idx int, nh integration.Node) {
 			defer wg.Done()
 			var assignedCIDRs []string
 			for p := 1; p <= burstPodsPerNode; p++ {
@@ -100,16 +100,22 @@ func TestMultiNodeConcurrentScaleUpBurst(t *testing.T) {
 	// Infrastructure convergence verification: all 5 nodes expand to 2 or more
 	// ranges and publish Ready=True.
 	f.Eventually("all 5 nodes expand in GCE and status with Ready=True", func() (bool, string) {
+		var unmet []string
 		for _, nh := range nodes {
 			ranges := nh.GCEAliasRanges()
 			nnc := nh.NNC()
 			cidrs := integration.StatusCIDRs(nnc)
-			if len(ranges) < 2 || len(cidrs) < 2 || !integration.StatusReady(nnc) {
-				return false, fmt.Sprintf("node %s not ready: gceRanges=%d statusCIDRs=%d ready=%v",
-					nh.Name(), len(ranges), len(cidrs), integration.StatusReady(nnc))
+			if len(ranges) < 2 {
+				unmet = append(unmet, fmt.Sprintf("node %s GCE ranges: got %d, want >= 2", nh.Name(), len(ranges)))
+			}
+			if len(cidrs) < 2 {
+				unmet = append(unmet, fmt.Sprintf("node %s status CIDRs: got %d, want >= 2", nh.Name(), len(cidrs)))
+			}
+			if !integration.StatusReady(nnc) {
+				unmet = append(unmet, fmt.Sprintf("node %s Ready condition is false", nh.Name()))
 			}
 		}
-		return true, "all 5 nodes expanded and ready"
+		return integration.FormatUnmet(unmet)
 	})
 
 	// CIDR disjointness verification: ensure no dynamic CIDR is shared across any

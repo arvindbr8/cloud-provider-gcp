@@ -74,8 +74,20 @@ func TestMixedAddAndRemove(t *testing.T) {
 				hasOld = true
 			}
 		}
-		ok := len(releasables) == 0 && len(ranges) == 2 && !hasOld && integration.StatusReady(currentNNC)
-		return ok, fmt.Sprintf("releasables=%v ranges=%v statusReady=%v", releasables, ranges, integration.StatusReady(currentNNC))
+		var unmet []string
+		if len(releasables) != 0 {
+			unmet = append(unmet, fmt.Sprintf("NNC releasableCIDRs: got %v, want empty", releasables))
+		}
+		if len(ranges) != 2 {
+			unmet = append(unmet, fmt.Sprintf("GCE alias ranges count: got %d, want 2", len(ranges)))
+		}
+		if hasOld {
+			unmet = append(unmet, fmt.Sprintf("GCE ranges still contains released CIDR %s", dynamicCIDR))
+		}
+		if !integration.StatusReady(currentNNC) {
+			unmet = append(unmet, "NNC Ready condition is false")
+		}
+		return integration.FormatUnmet(unmet)
 	})
 
 	// Status confirmation: status reflects two active ranges, excluding the

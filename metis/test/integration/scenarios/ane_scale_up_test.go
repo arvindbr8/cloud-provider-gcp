@@ -49,7 +49,6 @@ func TestScaleUp_ANE(t *testing.T) {
 	f.Eventually("GCE creates ANE and status publishes /32 with NonReusable policy", func() (bool, string) {
 		currentNNC := f.NNC()
 		anes := f.GCEANEs()
-		hasANE := len(anes) > 0
 		hasStatus32 := false
 		for _, pc := range currentNNC.Status.PodCIDRs {
 			if pc.CIDR == dynamicCIDR && pc.ReusePolicy == nncv1.PodCIDRTypeNonReusable {
@@ -57,7 +56,19 @@ func TestScaleUp_ANE(t *testing.T) {
 				break
 			}
 		}
-		return hasANE && hasStatus32 && integration.StatusReady(currentNNC) && f.BlockState(dynamicCIDR) == store.StateReady,
-			fmt.Sprintf("anes=%d hasStatus32=%v ready=%v blockState=%q", len(anes), hasStatus32, integration.StatusReady(currentNNC), f.BlockState(dynamicCIDR))
+		var unmet []string
+		if len(anes) == 0 {
+			unmet = append(unmet, "GCE has 0 ANEs, want > 0")
+		}
+		if !hasStatus32 {
+			unmet = append(unmet, fmt.Sprintf("NNC status missing NonReusable /32 CIDR %s", dynamicCIDR))
+		}
+		if !integration.StatusReady(currentNNC) {
+			unmet = append(unmet, "NNC Ready condition is false")
+		}
+		if state := f.BlockState(dynamicCIDR); state != store.StateReady {
+			unmet = append(unmet, fmt.Sprintf("DB block state: got %s, want %s", state, store.StateReady))
+		}
+		return integration.FormatUnmet(unmet)
 	})
 }

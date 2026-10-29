@@ -65,7 +65,16 @@ func TestConflictRetryOnStatusUpdate(t *testing.T) {
 	// status publish.
 	f.Eventually("status publish succeeds despite initial 409 conflict", func() (bool, string) {
 		nnc := f.NNC()
-		return conflictResolved && integration.StatusReady(nnc) && len(integration.StatusCIDRs(nnc)) == 1,
-			fmt.Sprintf("conflictResolved=%v ready=%v status=%v", conflictResolved, integration.StatusReady(nnc), integration.StatusCIDRs(nnc))
+		var unmet []string
+		if !conflictResolved {
+			unmet = append(unmet, "conflict has not yet been triggered and resolved")
+		}
+		if !integration.StatusReady(nnc) {
+			unmet = append(unmet, "NNC Ready condition is false")
+		}
+		if cidrs := integration.StatusCIDRs(nnc); len(cidrs) != 1 {
+			unmet = append(unmet, fmt.Sprintf("NNC status CIDRs count: got %d, want 1", len(cidrs)))
+		}
+		return integration.FormatUnmet(unmet)
 	})
 }

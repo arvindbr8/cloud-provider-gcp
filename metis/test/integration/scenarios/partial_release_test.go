@@ -64,7 +64,16 @@ func TestPartialReleaseWithActivePods(t *testing.T) {
 		ranges := f.GCEAliasRanges()
 		currentNNC := f.NNC()
 		want := []string{integration.InitialPodCIDR, dynamicBlock1}
-		ok := integration.EqualSets(ranges, want) && integration.EqualSets(integration.StatusCIDRs(currentNNC), want) && len(integration.ReleasableCIDRs(currentNNC)) == 0
-		return ok, fmt.Sprintf("gce=%v status=%v releasable=%v", ranges, integration.StatusCIDRs(currentNNC), integration.ReleasableCIDRs(currentNNC))
+		var unmet []string
+		if !integration.EqualSets(ranges, want) {
+			unmet = append(unmet, fmt.Sprintf("GCE alias ranges: got %v, want %v", ranges, want))
+		}
+		if !integration.EqualSets(integration.StatusCIDRs(currentNNC), want) {
+			unmet = append(unmet, fmt.Sprintf("NNC status CIDRs: got %v, want %v", integration.StatusCIDRs(currentNNC), want))
+		}
+		if rel := integration.ReleasableCIDRs(currentNNC); len(rel) != 0 {
+			unmet = append(unmet, fmt.Sprintf("NNC releasableCIDRs: got %v, want empty", rel))
+		}
+		return integration.FormatUnmet(unmet)
 	})
 }

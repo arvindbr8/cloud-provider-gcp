@@ -46,8 +46,17 @@ func TestMaxPodsScaleUp_512Pods(t *testing.T) {
 		nnc := f.NNC()
 		ranges := f.GCEAliasRanges()
 		cidrs := integration.StatusCIDRs(nnc)
-		ok := len(ranges) == expectedTotalBlocks && len(cidrs) == expectedTotalBlocks && integration.StatusReady(nnc)
-		return ok, fmt.Sprintf("gceRanges=%d statusCIDRs=%d ready=%v", len(ranges), len(cidrs), integration.StatusReady(nnc))
+		var unmet []string
+		if len(ranges) != expectedTotalBlocks {
+			unmet = append(unmet, fmt.Sprintf("GCE alias ranges count: got %d, want %d", len(ranges), expectedTotalBlocks))
+		}
+		if len(cidrs) != expectedTotalBlocks {
+			unmet = append(unmet, fmt.Sprintf("NNC status CIDRs count: got %d, want %d", len(cidrs), expectedTotalBlocks))
+		}
+		if !integration.StatusReady(nnc) {
+			unmet = append(unmet, "NNC Ready condition is false")
+		}
+		return integration.FormatUnmet(unmet)
 	})
 
 	// Store capacity verification: Metis SQLite store reflects 512 total IP

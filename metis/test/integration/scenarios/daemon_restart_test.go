@@ -40,12 +40,19 @@ func TestDaemonRestartRehydration(t *testing.T) {
 	_, dynamicCIDR := f.AllocatePod("pod-rehydrate-overflow")
 	f.Eventually("dynamic block is active and allocations stabilized before restart", func() (bool, string) {
 		nnc := f.NNC()
-		return f.BlockState(dynamicCIDR) == store.StateReady &&
-			len(f.GCEAliasRanges()) == 2 &&
-			len(nnc.Spec.Allocations) > 0 &&
-			nnc.Spec.Allocations[0].Pods == 32,
-			fmt.Sprintf("blockState=%q ranges=%v allocations=%v",
-				f.BlockState(dynamicCIDR), f.GCEAliasRanges(), nnc.Spec.Allocations)
+		var unmet []string
+		if state := f.BlockState(dynamicCIDR); state != store.StateReady {
+			unmet = append(unmet, fmt.Sprintf("DB block state: got %s, want %s", state, store.StateReady))
+		}
+		if ranges := f.GCEAliasRanges(); len(ranges) != 2 {
+			unmet = append(unmet, fmt.Sprintf("GCE alias ranges count: got %d, want 2", len(ranges)))
+		}
+		if len(nnc.Spec.Allocations) == 0 {
+			unmet = append(unmet, "NNC spec allocations is empty")
+		} else if nnc.Spec.Allocations[0].Pods != 32 {
+			unmet = append(unmet, fmt.Sprintf("NNC spec allocations pods: got %d, want 32", nnc.Spec.Allocations[0].Pods))
+		}
+		return integration.FormatUnmet(unmet)
 	})
 
 	allocationsBeforeRestart := slices.Clone(f.NNC().Spec.Allocations)
@@ -58,8 +65,14 @@ func TestDaemonRestartRehydration(t *testing.T) {
 	// generated.
 	f.Eventually("daemon rehydrates state and maintains stable allocations", func() (bool, string) {
 		currentNNC := f.NNC()
-		return integration.StatusReady(currentNNC) && apiequality.Semantic.DeepEqual(currentNNC.Spec.Allocations, allocationsBeforeRestart),
-			fmt.Sprintf("allocations=%v (want %v)", currentNNC.Spec.Allocations, allocationsBeforeRestart)
+		var unmet []string
+		if !integration.StatusReady(currentNNC) {
+			unmet = append(unmet, "NNC Ready condition is false")
+		}
+		if !apiequality.Semantic.DeepEqual(currentNNC.Spec.Allocations, allocationsBeforeRestart) {
+			unmet = append(unmet, fmt.Sprintf("NNC spec allocations: got %v, want %v", currentNNC.Spec.Allocations, allocationsBeforeRestart))
+		}
+		return integration.FormatUnmet(unmet)
 	})
 
 	// Operational continuation: verify new pod can be allocated immediately from

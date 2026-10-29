@@ -42,13 +42,19 @@ func TestNotReadyNodeHandling(t *testing.T) {
 	}
 
 	// Node readiness: cloud-node-controller assigns ProviderID to the Node.
-	f.UpdateNodeProviderID(integration.NodeProviderID(f.DefaultNode().Name()))
+	f.UpdateNodeProviderID(integration.NodeProviderID(f.FirstNode().Name()))
 
 	// Successful reconciliation: controllers proceed with reconciliation once Node
 	// is ready.
 	f.Eventually("CCM publishes Ready status after ProviderID is set", func() (bool, string) {
 		currentNNC := f.NNC()
-		return integration.StatusReady(currentNNC) && integration.EqualSets(integration.StatusCIDRs(currentNNC), []string{integration.InitialPodCIDR}),
-			fmt.Sprintf("ready=%v status=%v", integration.StatusReady(currentNNC), integration.StatusCIDRs(currentNNC))
+		var unmet []string
+		if !integration.StatusReady(currentNNC) {
+			unmet = append(unmet, "NNC Ready condition is false")
+		}
+		if !integration.EqualSets(integration.StatusCIDRs(currentNNC), []string{integration.InitialPodCIDR}) {
+			unmet = append(unmet, fmt.Sprintf("NNC status CIDRs: got %v, want %v", integration.StatusCIDRs(currentNNC), []string{integration.InitialPodCIDR}))
+		}
+		return integration.FormatUnmet(unmet)
 	})
 }

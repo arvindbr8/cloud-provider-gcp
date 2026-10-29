@@ -45,8 +45,17 @@ func TestSequentialMultiBlockScaleUp(t *testing.T) {
 	f.Eventually("first dynamic range is attached and ready", func() (bool, string) {
 		currentNNC := f.NNC()
 		ranges := f.GCEAliasRanges()
-		return len(ranges) == 2 && len(integration.StatusCIDRs(currentNNC)) == 2 && f.BlockState(dynCIDR1) == store.StateReady,
-			fmt.Sprintf("ranges=%v status=%v blockState=%q", ranges, integration.StatusCIDRs(currentNNC), f.BlockState(dynCIDR1))
+		var unmet []string
+		if len(ranges) != 2 {
+			unmet = append(unmet, fmt.Sprintf("GCE alias ranges count: got %d, want 2", len(ranges)))
+		}
+		if cidrs := integration.StatusCIDRs(currentNNC); len(cidrs) != 2 {
+			unmet = append(unmet, fmt.Sprintf("NNC status CIDRs count: got %d, want 2", len(cidrs)))
+		}
+		if state := f.BlockState(dynCIDR1); state != store.StateReady {
+			unmet = append(unmet, fmt.Sprintf("DB block state: got %s, want %s", state, store.StateReady))
+		}
+		return integration.FormatUnmet(unmet)
 	})
 
 	// First dynamic block saturation: fill remaining capacity of the first dynamic
@@ -70,7 +79,16 @@ func TestSequentialMultiBlockScaleUp(t *testing.T) {
 	f.Eventually("second dynamic range is attached and ready", func() (bool, string) {
 		currentNNC := f.NNC()
 		ranges := f.GCEAliasRanges()
-		return len(ranges) == 3 && len(integration.StatusCIDRs(currentNNC)) == 3 && f.BlockState(dynCIDR2) == store.StateReady,
-			fmt.Sprintf("ranges=%v status=%v blockState=%q", ranges, integration.StatusCIDRs(currentNNC), f.BlockState(dynCIDR2))
+		var unmet []string
+		if len(ranges) != 3 {
+			unmet = append(unmet, fmt.Sprintf("GCE alias ranges count: got %d, want 3", len(ranges)))
+		}
+		if cidrs := integration.StatusCIDRs(currentNNC); len(cidrs) != 3 {
+			unmet = append(unmet, fmt.Sprintf("NNC status CIDRs count: got %d, want 3", len(cidrs)))
+		}
+		if state := f.BlockState(dynCIDR2); state != store.StateReady {
+			unmet = append(unmet, fmt.Sprintf("DB block state: got %s, want %s", state, store.StateReady))
+		}
+		return integration.FormatUnmet(unmet)
 	})
 }

@@ -57,7 +57,16 @@ func TestScaleDown_ANE(t *testing.T) {
 		anes := f.GCEANEs()
 		currentNNC := f.NNC()
 		rel := integration.ReleasableCIDRs(currentNNC)
-		return len(anes) == 0 && len(rel) == 0 && integration.EqualSets(integration.StatusCIDRs(currentNNC), []string{integration.InitialPodCIDR}),
-			fmt.Sprintf("anes=%d releasable=%v status=%v", len(anes), rel, integration.StatusCIDRs(currentNNC))
+		var unmet []string
+		if len(anes) != 0 {
+			unmet = append(unmet, fmt.Sprintf("GCE ANEs: got %d, want 0", len(anes)))
+		}
+		if len(rel) != 0 {
+			unmet = append(unmet, fmt.Sprintf("NNC releasableCIDRs: got %v, want empty", rel))
+		}
+		if !integration.EqualSets(integration.StatusCIDRs(currentNNC), []string{integration.InitialPodCIDR}) {
+			unmet = append(unmet, fmt.Sprintf("NNC status CIDRs: got %v, want %v", integration.StatusCIDRs(currentNNC), []string{integration.InitialPodCIDR}))
+		}
+		return integration.FormatUnmet(unmet)
 	})
 }
