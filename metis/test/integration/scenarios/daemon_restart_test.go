@@ -18,6 +18,7 @@ package scenarios
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
@@ -37,12 +38,17 @@ func TestDaemonRestartRehydration(t *testing.T) {
 		f.AllocatePod(fmt.Sprintf("pod-rehydrate-init-%d", i))
 	}
 	_, dynamicCIDR := f.AllocatePod("pod-rehydrate-overflow")
-	f.Eventually("dynamic block is active before restart", func() (bool, string) {
-		return f.BlockState(dynamicCIDR) == store.StateReady && len(f.GCEAliasRanges()) == 2,
-			fmt.Sprintf("blockState=%q ranges=%v", f.BlockState(dynamicCIDR), f.GCEAliasRanges())
+	f.Eventually("dynamic block is active and allocations stabilized before restart", func() (bool, string) {
+		nnc := f.NNC()
+		return f.BlockState(dynamicCIDR) == store.StateReady &&
+			len(f.GCEAliasRanges()) == 2 &&
+			len(nnc.Spec.Allocations) > 0 &&
+			nnc.Spec.Allocations[0].Pods == 32,
+			fmt.Sprintf("blockState=%q ranges=%v allocations=%v",
+				f.BlockState(dynamicCIDR), f.GCEAliasRanges(), nnc.Spec.Allocations)
 	})
 
-	allocationsBeforeRestart := f.NNC().Spec.Allocations
+	allocationsBeforeRestart := slices.Clone(f.NNC().Spec.Allocations)
 
 	// Daemon lifecycle restart: restart daemon against the same SQLite database
 	// and NNC.
