@@ -110,7 +110,7 @@ func TestMultiNodeConcurrentScaleUpBurst(t *testing.T) {
 
 	// CIDR disjointness verification: ensure no dynamic CIDR is shared across any
 	// two nodes.
-	allDynamicCIDRs := make(map[string]string)
+	allDynamicCIDRs := map[string]string{}
 	for idx, nh := range nodes {
 		for _, c := range nodeBurstCIDRs[idx] {
 			if owner, exists := allDynamicCIDRs[c]; exists && owner != nh.Name() {
